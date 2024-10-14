@@ -1,0 +1,22 @@
+#!/bin/bash
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# System Request : Debian 9+/Ubuntu 18.04+/20+
+# Develovers » 🗽🥷🎮🧑‍💻🔫Cyberpunk🥷🧑‍💻🗽**TOpPLUG**
+# Email      » tuffgamer65@gmail.com
+# telegram   » https://t.me/T_OpPLUG
+# whatsapp   » wa.me/+254112386921
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🧑‍💻🏴‍☠️🥷🗽**TOpPLUG script**🧑‍💻🏴‍☠️🥷🗽
+# ==========================================
+clear
+domain=$(cat /etc/xray/domain)
+IP=$( curl -s ifconfig.me )
+apt install haproxy -y
+ wget -q -O /etc/squid/squid.conf "https://HE3ndrixx.github.io/project/ssh/squid.conf" >/dev/null 2>&1
+    wget -O /etc/haproxy/haproxy.cfg "https://HE3ndrixx.github.io/project/xray/haproxy.cfg" >/dev/null 2>&1
+    wget -O /etc/nginx/conf.d/xray.conf "https://HE3ndrixx.github.io/project/xray/xray.conf" >/dev/null 2>&1
+    sed -i "s/xxx/${domain}/g" /etc/haproxy/haproxy.cfg
+    sed -i "s/xxx/${domain}/g" /etc/nginx/conf.d/xray.conf
+    sed -i "s/xxx/${IP}/g" /etc/squid/squid.conf
+    cat /etc/xray/xray.crt /etc/xray/xray.key | tee /etc/haproxy/hap.pem
+    echo ""
