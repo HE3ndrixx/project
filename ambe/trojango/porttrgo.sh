@@ -113,55 +113,35 @@ fi
 clear
 date
 echo ""
-uuid=$(cat /etc/trojan-go/uuid.txt)
-domain=$(cat /etc/xray/domain)
-trgo="$(cat ~/log-install.txt | grep -w "Tr Go" | cut -d: -f2|sed 's/ //g')"
-until [[ $user =~ ^[a-zA-Z0-9_]+$ && ${user_EXISTS} == '0' ]]; do
+tr="$(cat ~/log-install.txt | grep -w "Tr Go" | cut -d: -f2|sed 's/ //g')"
 echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-		echo -e "\E[44;1;39m       ⇱ TROJAN-GO ACCOUNT ⇲       \E[0m"
-		echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-		read -rp "Password : " -e user
-		user_EXISTS=$(grep -w $user /etc/trojan-go/akun.conf | wc -l)
-
-		if [[ ${user_EXISTS} == '1' ]]; then
-			clear
-		echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-		echo -e "\E[44;1;39m       ⇱ TROJAN-GO ACCOUNT ⇲       \E[0m"
-		echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-			echo ""
-			echo "A client with the specified name was already created, please choose another name."
-			echo ""
-			echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-			read -n 1 -s -r -p "Press any key to back on menu"
-			menu-trojan
-		fi
-	done
-read -p "Expired (Days) : " masaaktif
-sed -i '/"'""$uuid""'"$/a\,"'""$user""'"' /etc/trojan-go/config.json
-exp=`date -d "$masaaktif days" +"%Y-%m-%d"`
-hariini=`date -d "0 days" +"%Y-%m-%d"`
-echo -e "### $user $exp" >> /etc/trojan-go/akun.conf
-systemctl restart trojan-go.service
-link="trojan-go://${user}@${domain}:${trgo}/?sni=${domain}&type=ws&host=${domain}&path=/worryfree&encryption=none#$user"
-clear
-echo -e ""
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m" | tee -a /etc/log-create-user.log
-echo -e "\E[44;1;39m       ⇱ TROJAN-GO ACCOUNT ⇲       \E[0m" | tee -a /etc/log-create-user.log
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m" | tee -a /etc/log-create-user.log
-echo -e "Remarks    : ${user}" | tee -a /etc/log-create-user.log
-echo -e "IP/Host    : ${MYIP}" | tee -a /etc/log-create-user.log
-echo -e "Address    : ${domain}" | tee -a /etc/log-create-user.log
-echo -e "Port       : ${trgo}" | tee -a /etc/log-create-user.log
-echo -e "Key        : ${user}" | tee -a /etc/log-create-user.log
-echo -e "Encryption : none" | tee -a /etc/log-create-user.log
-echo -e "Path       : /worryfree" | tee -a /etc/log-create-user.log
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m" | tee -a /etc/log-create-user.log
-echo -e "Expired On : $hariini" | tee -a /etc/log-create-user.log
-echo -e "Expired Off : $exp" | tee -a /etc/log-create-user.log
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m" | tee -a /etc/log-create-user.log
-echo -e "Link TrGo  : ${link}" | tee -a /etc/log-create-user.log
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m" | tee -a /etc/log-create-user.log
-echo -e "" | tee -a /etc/log-create-user.log
-read -n 1 -s -r -p "Press Any Key To Back On Menu"
+echo -e "\E[44;1;39m     ⇱ Change Port Trojan-Go ⇲     \E[0m"
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "      Change Port $tr"
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+read -p "New Port TrojanGo: " tr2
+if [ -z $tr2 ]; then
+echo "Please Input Port"
+exit 0
+fi
+cek=$(netstat -nutlp | grep -w $tr2)
+if [[ -z $cek ]]; then
+sed -i "s/$tr/$tr2/g" /etc/trojan-go/config.json
+sed -i "s/   - Trojan Go               : $tr/   - Trojan Go               : $tr2/g" /root/log-install.txt
+iptables -D INPUT -m state --state NEW -m tcp -p tcp --dport $tr -j ACCEPT
+iptables -D INPUT -m state --state NEW -m udp -p udp --dport $tr -j ACCEPT
+iptables -I INPUT -m state --state NEW -m tcp -p tcp --dport $tr2 -j ACCEPT
+iptables -I INPUT -m state --state NEW -m udp -p udp --dport $tr2 -j ACCEPT
+iptables-save > /etc/iptables.up.rules
+iptables-restore -t < /etc/iptables.up.rules
+netfilter-persistent save > /dev/null
+netfilter-persistent reload > /dev/null
+systemctl restart trojan-go > /dev/null
+echo -e "\e[032;1mPort $tr2 modified successfully\e[0m"
+else
+echo "Port $tr2 is used"
+fi
+echo ""
+read -n 1 -s -r -p "Press any key to back on menu"
 
 menu-trojan
