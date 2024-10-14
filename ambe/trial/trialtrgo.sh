@@ -116,97 +116,47 @@ echo ""
 ISP=$(curl -s ipinfo.io/org | cut -d " " -f 2-10 )
 CITY=$(curl -s ipinfo.io/city )
 COUNTRY=$(curl -s ipinfo.io/country )
-
-MYIP=$(wget -qO- ipinfo.io/ip);
+MYIP=$(curl -sS ipinfo.io/ip)
 clear
+uuid=$(cat /etc/trojan-go/uuid.txt)
 domain=$(cat /etc/xray/domain)
-lastport1=$(grep "port_tls" /etc/shadowsocks-libev/akun.conf | tail -n1 | awk '{print $2}')
-lastport2=$(grep "port_http" /etc/shadowsocks-libev/akun.conf | tail -n1 | awk '{print $2}')
-if [[ $lastport1 == '' ]]; then
-tls=2443
-else
-tls="$((lastport1+1))"
-fi
-if [[ $lastport2 == '' ]]; then
-http=3443
-else
-http="$((lastport2+1))"
-fi
-
+trgo="$(cat ~/log-install.txt | grep -w "Tr Go" | cut -d: -f2|sed 's/ //g')"
 # Create Expried 
 masaaktif="1"
 exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
 
 # Make Random Username 
 user=Trial`</dev/urandom tr -dc X-Z0-9 | head -c4`
-
-cat > /etc/shadowsocks-libev/$user-tls.json<<END
-{   
-    "server":"0.0.0.0",
-    "server_port":$tls,
-    "password":"$user",
-    "timeout":60,
-    "method":"aes-256-cfb",
-    "fast_open":true,
-    "no_delay":true,
-    "nameserver":"8.8.8.8",
-    "mode":"tcp_and_udp",
-    "plugin":"obfs-server",
-    "plugin_opts":"obfs=tls"
-}
+users="Trojan-GO_$user"
+sed -i '/"'""$uuid""'"$/a\,"'""$user""'"' /etc/trojan-go/config.json
+exp=`date -d "$masaaktif days" +"%Y-%m-%d"`
+echo -e "### $user $exp" >> /etc/trojan-go/akun.conf
+echo -e "### $user $exp" >> /etc/trojan/akun.conf
+systemctl restart trojan-go.service
+link="trojan-go://${user}@${domain}:${trgo}/?sni=${domain}&type=ws&host=${domain}&path=/trojango&encryption=none#$user"
 END
-cat > /etc/shadowsocks-libev/$user-http.json <<-END
-{
-    "server":"0.0.0.0",
-    "server_port":$http,
-    "password":"$user",
-    "timeout":60,
-    "method":"aes-256-cfb",
-    "fast_open":true,
-    "no_delay":true,
-    "nameserver":"8.8.8.8",
-    "mode":"tcp_and_udp",
-    "plugin":"obfs-server",
-    "plugin_opts":"obfs=http"
-}
-END
-chmod +x /etc/shadowsocks-libev/$user-tls.json
-chmod +x /etc/shadowsocks-libev/$user-http.json
-
-systemctl enable shadowsocks-libev-server@$user-tls.service
-systemctl start shadowsocks-libev-server@$user-tls.service
-systemctl enable shadowsocks-libev-server@$user-http.service
-systemctl start shadowsocks-libev-server@$user-http.service
-tmp1=$(echo -n "aes-256-cfb:${user}@${MYIP}:$tls" | base64 -w0)
-tmp2=$(echo -n "aes-256-cfb:${user}@${MYIP}:$http" | base64 -w0)
-linkss1="ss://${tmp1}?plugin=obfs-local;obfs=tls;obfs-host=bing.com"
-linkss2="ss://${tmp2}?plugin=obfs-local;obfs=http;obfs-host=bing.com"
-echo -e "### $user $exp
-port_tls $tls
-port_http $http">>"/etc/shadowsocks-libev/akun.conf"
-service cron restart
 clear
-clear
+echo -e ""
 echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "\E[44;1;39m  ⇱ Trial SS ⇲ \E[0m"
+echo -e "\E[44;1;39m  ⇱ TRIAL TROJAN-GO ⇲ \E[0m"
 echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo ""
-echo -e "IP/Host     : $MYIP"
-echo -e "Domain      : $domain"
-echo -e "Port HTTPS  : $tls"
-echo -e "Port HTTP   : $http"
-echo -e "Password    : $user"
-echo -e "Method      : aes-256-cfb"
+echo -e " ISP              : ${ISP}"
+echo -e " CITY             : ${CITY}"
+echo -e " COUNTRY          : ${COUNTRY}"
+echo -e " Remarks          : ${user}"
+echo -e " Host             : ${domain}"
+echo -e " Port Trojan-GO   : ${trgo}"
+echo -e " Path WebSocket   : /trojango"
 echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "Link HTTPS  : $linkss1"
+echo -e "Link TrGo  : ${link}"
 echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "Link HTTP   : $linkss2"
+echo -e " Aktif Selama   : $masaaktif Hari"
 echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e " ${white}Aktif Selama   : $masaaktif Hari"
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e " Mod By Geo Gabut"
+echo -e ""
+echo -e ""
 echo -e ""
 read -n 1 -s -r -p "Press Any Key To Back On Menu"
 
 menu-trial
-
 

@@ -113,100 +113,66 @@ fi
 clear
 date
 echo ""
-ISP=$(curl -s ipinfo.io/org | cut -d " " -f 2-10 )
-CITY=$(curl -s ipinfo.io/city )
-COUNTRY=$(curl -s ipinfo.io/country )
-
-MYIP=$(wget -qO- ipinfo.io/ip);
+MYIP=$(curl -sS ipinfo.io/ip)
+echo "Checking VPS"
 clear
 domain=$(cat /etc/xray/domain)
-lastport1=$(grep "port_tls" /etc/shadowsocks-libev/akun.conf | tail -n1 | awk '{print $2}')
-lastport2=$(grep "port_http" /etc/shadowsocks-libev/akun.conf | tail -n1 | awk '{print $2}')
-if [[ $lastport1 == '' ]]; then
-tls=2443
-else
-tls="$((lastport1+1))"
-fi
-if [[ $lastport2 == '' ]]; then
-http=3443
-else
-http="$((lastport2+1))"
-fi
-
-# Create Expried 
-masaaktif="1"
-exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
-
-# Make Random Username 
-user=Trial`</dev/urandom tr -dc X-Z0-9 | head -c4`
-
-cat > /etc/shadowsocks-libev/$user-tls.json<<END
-{   
-    "server":"0.0.0.0",
-    "server_port":$tls,
-    "password":"$user",
-    "timeout":60,
-    "method":"aes-256-cfb",
-    "fast_open":true,
-    "no_delay":true,
-    "nameserver":"8.8.8.8",
-    "mode":"tcp_and_udp",
-    "plugin":"obfs-server",
-    "plugin_opts":"obfs=tls"
-}
-END
-cat > /etc/shadowsocks-libev/$user-http.json <<-END
-{
-    "server":"0.0.0.0",
-    "server_port":$http,
-    "password":"$user",
-    "timeout":60,
-    "method":"aes-256-cfb",
-    "fast_open":true,
-    "no_delay":true,
-    "nameserver":"8.8.8.8",
-    "mode":"tcp_and_udp",
-    "plugin":"obfs-server",
-    "plugin_opts":"obfs=http"
-}
-END
-chmod +x /etc/shadowsocks-libev/$user-tls.json
-chmod +x /etc/shadowsocks-libev/$user-http.json
-
-systemctl enable shadowsocks-libev-server@$user-tls.service
-systemctl start shadowsocks-libev-server@$user-tls.service
-systemctl enable shadowsocks-libev-server@$user-http.service
-systemctl start shadowsocks-libev-server@$user-http.service
-tmp1=$(echo -n "aes-256-cfb:${user}@${MYIP}:$tls" | base64 -w0)
-tmp2=$(echo -n "aes-256-cfb:${user}@${MYIP}:$http" | base64 -w0)
-linkss1="ss://${tmp1}?plugin=obfs-local;obfs=tls;obfs-host=bing.com"
-linkss2="ss://${tmp2}?plugin=obfs-local;obfs=http;obfs-host=bing.com"
-echo -e "### $user $exp
-port_tls $tls
-port_http $http">>"/etc/shadowsocks-libev/akun.conf"
-service cron restart
 clear
+MYIP=$(curl -sS ipinfo.io/ip)
+wssl="$(cat ~/log-install.txt | grep -w "Websocket TLS" | cut -d: -f2|sed 's/ //g')"
+ws="$(cat ~/log-install.txt | grep -w "Websocket None TLS" | cut -d: -f2|sed 's/ //g')"
+wso="$(cat ~/log-install.txt | grep -w "Websocket Ovpn" | cut -d: -f2|sed 's/ //g')"
+ohps="$(cat ~/log-install.txt | grep -w "OHP_SSH" | cut -d: -f2|sed 's/ //g')"
+ohpd="$(cat ~/log-install.txt | grep -w "OHP_Dropbear" | cut -d: -f2|sed 's/ //g')"
+ohpo="$(cat ~/log-install.txt | grep -w "OHP_OpenVPN" | cut -d: -f2|sed 's/ //g')"
+open="$(cat ~/log-install.txt | grep -w "OpenSSH" | cut -d: -f2|sed 's/ //g')"
+drop="$(cat ~/log-install.txt | grep -w "Dropbear" | cut -d: -f2|sed 's/ //g')"
+web="$(cat ~/log-install.txt | grep -w "Websocket Ovpn" | cut -d: -f2|sed 's/ //g')"
+
+ssl="$(cat ~/log-install.txt | grep -w "Stunnel5" | cut -d: -f2)"
+sqd="$(cat ~/log-install.txt | grep -w "Squid" | cut -d: -f2)"
+ovpn="$(netstat -nlpt | grep -i openvpn | grep -i 0.0.0.0 | awk '{print $4}' | cut -d: -f2)"
+ovpn2="$(netstat -nlpu | grep -i openvpn | grep -i 0.0.0.0 | awk '{print $4}' | cut -d: -f2)"
 clear
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "\E[44;1;39m  ⇱ Trial SS ⇲ \E[0m"
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo ""
-echo -e "IP/Host     : $MYIP"
-echo -e "Domain      : $domain"
-echo -e "Port HTTPS  : $tls"
-echo -e "Port HTTP   : $http"
-echo -e "Password    : $user"
-echo -e "Method      : aes-256-cfb"
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "Link HTTPS  : $linkss1"
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "Link HTTP   : $linkss2"
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e " ${white}Aktif Selama   : $masaaktif Hari"
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
+Login=Trial`</dev/urandom tr -dc X-Z0-9 | head -c10`
+hari="1"
+Pass=123
+clear
+useradd -e `date -d "$masaaktif days" +"%Y-%m-%d"` -s /bin/false -M $Login
+exp="$(chage -l $Login | grep "Account expires" | awk -F": " '{print $2}')"
+hariini=`date -d "0 days" +"%Y-%m-%d"`
+expi=`date -d "$masaaktif days" +"%Y-%m-%d"`
+echo -e "$Pass\n$Pass\n"|passwd $Login &> /dev/null
+echo -e ""
+echo -e "${GREEN}━━━━━━━━━━━━━━\033[0m"
+echo -e "Thank You For Using Our Services Trial SSH ${off}"
+echo -e "OpenVPN & Websocket Account Info${off}"
+echo -e "${GREEN}━━━━━━━━━━━━━━\033[0m"
+echo -e "Username      : $Login"
+echo -e "Password      : $Pass"
+echo -e "Created       : $hariini"
+echo -e "Expired       : $expi"
+echo -e "${GREEN}━━━━━━━━━━━━━━\033[0m"
+echo -e "IP/Host       : ${domain}"
+echo -e "OpenSSH       : $open"
+echo -e "Dropbear      : $drop"
+echo -e "SSL/TLS       :$ssl"
+echo -e "Port Squid    :$sqd"
+echo -e "Port OHP      : SSH $ohps, Dropbear $ohpd, Ovpn $ohpo"
+echo -e "${GREEN}━━━━━━━━━━━━━━\033[0m"
+echo -e "SSH WS        : $ws"
+echo -e "SSH WS SSL    : $wssl"
+echo -e "OpenVPN WS    : $wso"
+#echo -e "${CYAN}==Payload WS==\033[0m"
+#echo -e "\E[41;1;39m GET / HTTP/1.1[crlf]Host: ${domain}[crlf]Connection: Keep-Alive[crlf]User-Agent: [ua][crlf]Upgrade: websocket[crlf][crlf]${off}"
+echo -e "${GREEN}━━━━━━━━━━━━━━\033[0m"
+echo -e "Link Ovpn     : http://$MYIP:89/"
+echo -e "badvpn        : 7100-7200-7300"
+echo -e "${GREEN}━━━━━━━━━━━━━━\033[0m"
+echo -e " Enjoy Our Auto Script Service $off"
+echo -e ""
+echo -e ""
 echo -e ""
 read -n 1 -s -r -p "Press Any Key To Back On Menu"
 
 menu-trial
-
-

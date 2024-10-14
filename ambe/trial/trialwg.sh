@@ -119,94 +119,78 @@ COUNTRY=$(curl -s ipinfo.io/country )
 
 MYIP=$(wget -qO- ipinfo.io/ip);
 clear
-domain=$(cat /etc/xray/domain)
-lastport1=$(grep "port_tls" /etc/shadowsocks-libev/akun.conf | tail -n1 | awk '{print $2}')
-lastport2=$(grep "port_http" /etc/shadowsocks-libev/akun.conf | tail -n1 | awk '{print $2}')
-if [[ $lastport1 == '' ]]; then
-tls=2443
-else
-tls="$((lastport1+1))"
-fi
-if [[ $lastport2 == '' ]]; then
-http=3443
-else
-http="$((lastport2+1))"
-fi
+# Load params
+source /etc/wireguard/params
+
+SERVER_PUB_IP=$(cat /etc/xray/domain);
 
 # Create Expried 
 masaaktif="1"
 exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
 
 # Make Random Username 
-user=Trial`</dev/urandom tr -dc X-Z0-9 | head -c4`
+CLIENT_NAME=Trial`</dev/urandom tr -dc X-Z0-9 | head -c4`
 
-cat > /etc/shadowsocks-libev/$user-tls.json<<END
-{   
-    "server":"0.0.0.0",
-    "server_port":$tls,
-    "password":"$user",
-    "timeout":60,
-    "method":"aes-256-cfb",
-    "fast_open":true,
-    "no_delay":true,
-    "nameserver":"8.8.8.8",
-    "mode":"tcp_and_udp",
-    "plugin":"obfs-server",
-    "plugin_opts":"obfs=tls"
-}
-END
-cat > /etc/shadowsocks-libev/$user-http.json <<-END
-{
-    "server":"0.0.0.0",
-    "server_port":$http,
-    "password":"$user",
-    "timeout":60,
-    "method":"aes-256-cfb",
-    "fast_open":true,
-    "no_delay":true,
-    "nameserver":"8.8.8.8",
-    "mode":"tcp_and_udp",
-    "plugin":"obfs-server",
-    "plugin_opts":"obfs=http"
-}
-END
-chmod +x /etc/shadowsocks-libev/$user-tls.json
-chmod +x /etc/shadowsocks-libev/$user-http.json
+ENDPOINT="$SERVER_PUB_IP:$SERVER_PORT"
+WG_CONFIG="/etc/wireguard/wg0.conf"
+LASTIP=$( grep "/32" $WG_CONFIG | tail -n1 | awk '{print $3}' | cut -d "/" -f 1 | cut -d "." -f 4 )
+if [[ "$LASTIP" = "" ]]; then
+CLIENT_ADDRESS="10.66.66.2"
+else
+CLIENT_ADDRESS="10.66.66.$((LASTIP+1))"
+fi
 
-systemctl enable shadowsocks-libev-server@$user-tls.service
-systemctl start shadowsocks-libev-server@$user-tls.service
-systemctl enable shadowsocks-libev-server@$user-http.service
-systemctl start shadowsocks-libev-server@$user-http.service
-tmp1=$(echo -n "aes-256-cfb:${user}@${MYIP}:$tls" | base64 -w0)
-tmp2=$(echo -n "aes-256-cfb:${user}@${MYIP}:$http" | base64 -w0)
-linkss1="ss://${tmp1}?plugin=obfs-local;obfs=tls;obfs-host=bing.com"
-linkss2="ss://${tmp2}?plugin=obfs-local;obfs=http;obfs-host=bing.com"
-echo -e "### $user $exp
-port_tls $tls
-port_http $http">>"/etc/shadowsocks-libev/akun.conf"
-service cron restart
+# Adguard DNS by default
+CLIENT_DNS_1="176.103.130.130"
+
+CLIENT_DNS_2="176.103.130.131"
+
+
+# Generate key pair for the client
+CLIENT_PRIV_KEY=$(wg genkey)
+CLIENT_PUB_KEY=$(echo "$CLIENT_PRIV_KEY" | wg pubkey)
+CLIENT_PRE_SHARED_KEY=$(wg genpsk)
+
+# Create client file and add the server as a peer
+echo "[Interface]
+PrivateKey = $CLIENT_PRIV_KEY
+Address = $CLIENT_ADDRESS/24
+DNS = $CLIENT_DNS_1,$CLIENT_DNS_2
+
+[Peer]
+PublicKey = $SERVER_PUB_KEY
+PresharedKey = $CLIENT_PRE_SHARED_KEY
+Endpoint = $ENDPOINT
+AllowedIPs = 0.0.0.0/0,::/0" >>"$HOME/$SERVER_WG_NIC-client-$CLIENT_NAME.conf"
+
+# Add the client as a peer to the server
+echo -e "### Client $CLIENT_NAME $exp
+[Peer]
+PublicKey = $CLIENT_PUB_KEY
+PresharedKey = $CLIENT_PRE_SHARED_KEY
+AllowedIPs = $CLIENT_ADDRESS/32" >>"/etc/wireguard/$SERVER_WG_NIC.conf"
+systemctl restart "wg-quick@$SERVER_WG_NIC"
+cp $HOME/$SERVER_WG_NIC-client-$CLIENT_NAME.conf /home/vps/public_html/$CLIENT_NAME.conf
 clear
-clear
+sleep 1
+echo -e ""
 echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "\E[44;1;39m  ⇱ Trial SS ⇲ \E[0m"
+echo -e "\E[44;1;39m  ⇱ TRIAL WG ACCOUNT ⇲ \E[0m"
 echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo ""
-echo -e "IP/Host     : $MYIP"
-echo -e "Domain      : $domain"
-echo -e "Port HTTPS  : $tls"
-echo -e "Port HTTP   : $http"
-echo -e "Password    : $user"
-echo -e "Method      : aes-256-cfb"
+echo -e " ISP            : ${ISP}"
+echo -e " CITY           : ${CITY}"
+echo -e " COUNTRY        : ${COUNTRY}"
+echo -e " Server IP      : ${MYIP}"
+echo -e " Server Host    : ${SERVER_PUB_IP}"
 echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "Link HTTPS  : $linkss1"
+echo -e " WireGuard URL  : "
+echo -e " http://$SERVER_PUB_IP:89/$CLIENT_NAME.conf${off}"
 echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "Link HTTP   : $linkss2"
+echo -e " Aktif Selama   : $masaaktif Hari"
 echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e " ${white}Aktif Selama   : $masaaktif Hari"
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
+rm -f /root/wg0-client-$CLIENT_NAME.conf
 echo -e ""
 read -n 1 -s -r -p "Press Any Key To Back On Menu"
 
 menu-trial
-
 

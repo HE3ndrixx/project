@@ -113,100 +113,80 @@ fi
 clear
 date
 echo ""
-ISP=$(curl -s ipinfo.io/org | cut -d " " -f 2-10 )
-CITY=$(curl -s ipinfo.io/city )
-COUNTRY=$(curl -s ipinfo.io/country )
-
-MYIP=$(wget -qO- ipinfo.io/ip);
-clear
 domain=$(cat /etc/xray/domain)
-lastport1=$(grep "port_tls" /etc/shadowsocks-libev/akun.conf | tail -n1 | awk '{print $2}')
-lastport2=$(grep "port_http" /etc/shadowsocks-libev/akun.conf | tail -n1 | awk '{print $2}')
-if [[ $lastport1 == '' ]]; then
-tls=2443
-else
-tls="$((lastport1+1))"
-fi
-if [[ $lastport2 == '' ]]; then
-http=3443
-else
-http="$((lastport2+1))"
-fi
-
 # Create Expried 
 masaaktif="1"
 exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
 
+read -rp "Bug: " -e bug
+tls="$(cat ~/log-install.txt | grep -w "Vmess TLS" | cut -d: -f2|sed 's/ //g')"
+nontls="$(cat ~/log-install.txt | grep -w "Vmess None TLS" | cut -d: -f2|sed 's/ //g')"
 # Make Random Username 
 user=Trial`</dev/urandom tr -dc X-Z0-9 | head -c4`
-
-cat > /etc/shadowsocks-libev/$user-tls.json<<END
-{   
-    "server":"0.0.0.0",
-    "server_port":$tls,
-    "password":"$user",
-    "timeout":60,
-    "method":"aes-256-cfb",
-    "fast_open":true,
-    "no_delay":true,
-    "nameserver":"8.8.8.8",
-    "mode":"tcp_and_udp",
-    "plugin":"obfs-server",
-    "plugin_opts":"obfs=tls"
+uuid=$(cat /proc/sys/kernel/random/uuid)
+created=`date -d "0 days" +"%d-%m-%Y"`
+sed -i '/#xray-v2ray-tls$/a\### '"$user $exp"'\
+},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/v2ray-tls.json
+sed -i '/#xray-v2ray-nontls$/a\### '"$user $exp"'\
+},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/v2ray-nontls.json
+cat>/etc/xray/v2ray-$user-tls.json<<EOF
+      {
+      "v": "2",
+      "ps": "${user}",
+      "add": "${domain}",
+      "port": "${tls}",
+      "id": "${uuid}",
+      "aid": "0",
+      "net": "ws",
+      "path": "/HE3ndrixx/",
+      "type": "none",
+      "host": "",
+      "tls": "tls"
 }
-END
-cat > /etc/shadowsocks-libev/$user-http.json <<-END
-{
-    "server":"0.0.0.0",
-    "server_port":$http,
-    "password":"$user",
-    "timeout":60,
-    "method":"aes-256-cfb",
-    "fast_open":true,
-    "no_delay":true,
-    "nameserver":"8.8.8.8",
-    "mode":"tcp_and_udp",
-    "plugin":"obfs-server",
-    "plugin_opts":"obfs=http"
+EOF
+cat>/etc/xray/v2ray-$user-nontls.json<<EOF
+      {
+      "v": "2",
+      "ps": "${user}",
+      "add": "${bug}",
+      "port": "${nontls}",
+      "id": "${uuid}",
+      "aid": "0",
+      "net": "ws",
+      "path": "/HE3ndrixx/",
+      "type": "none",
+      "host": "${domain}",
+      "tls": "none"
 }
-END
-chmod +x /etc/shadowsocks-libev/$user-tls.json
-chmod +x /etc/shadowsocks-libev/$user-http.json
-
-systemctl enable shadowsocks-libev-server@$user-tls.service
-systemctl start shadowsocks-libev-server@$user-tls.service
-systemctl enable shadowsocks-libev-server@$user-http.service
-systemctl start shadowsocks-libev-server@$user-http.service
-tmp1=$(echo -n "aes-256-cfb:${user}@${MYIP}:$tls" | base64 -w0)
-tmp2=$(echo -n "aes-256-cfb:${user}@${MYIP}:$http" | base64 -w0)
-linkss1="ss://${tmp1}?plugin=obfs-local;obfs=tls;obfs-host=bing.com"
-linkss2="ss://${tmp2}?plugin=obfs-local;obfs=http;obfs-host=bing.com"
-echo -e "### $user $exp
-port_tls $tls
-port_http $http">>"/etc/shadowsocks-libev/akun.conf"
+EOF
+vmess_base641=$( base64 -w 0 <<< $vmess_json1)
+vmess_base642=$( base64 -w 0 <<< $vmess_json2)
+xrayv2ray1="vmess://$(base64 -w 0 /etc/xray/v2ray-$user-tls.json)"
+xrayv2ray2="vmess://$(base64 -w 0 /etc/xray/v2ray-$user-nontls.json)"
+systemctl restart xray@v2ray-tls
+systemctl restart xray@v2ray-nontls
 service cron restart
 clear
-clear
 echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "\E[44;1;39m  ⇱ Trial SS ⇲ \E[0m"
+echo -e "\E[44;1;39m🔸 Xray/Vmess Account🔸\E[0m"
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "Remarks : ${user}"
+echo -e "Domain : ${domain}"
+echo -e "port TLS : ${tls}"
+echo -e "port none TLS : ${nontls}"
+echo -e "id : ${uuid}"
+echo -e "alterId : 0"
+echo -e "Security : auto"
+echo -e "network : ws"
+echo -e "path : /HE3ndrixx/"
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "Link TLS : ${xrayv2ray1}"
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "Link none TLS : ${xrayv2ray2}"
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "Expired On : $masaaktif Hari"
 echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
 echo ""
-echo -e "IP/Host     : $MYIP"
-echo -e "Domain      : $domain"
-echo -e "Port HTTPS  : $tls"
-echo -e "Port HTTP   : $http"
-echo -e "Password    : $user"
-echo -e "Method      : aes-256-cfb"
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "Link HTTPS  : $linkss1"
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "Link HTTP   : $linkss2"
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e " ${white}Aktif Selama   : $masaaktif Hari"
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e ""
-read -n 1 -s -r -p "Press Any Key To Back On Menu"
+read -n 1 -s -r -p "Press any key to back on menu"
 
 menu-trial
-
-
