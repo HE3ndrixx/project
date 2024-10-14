@@ -1,0 +1,3 @@
+Notif1 klenin980@gmail.com Skateboard@1
+Notif2 klenin980@gmail.com Skateboard@1
+Jumlah-Notif 2
