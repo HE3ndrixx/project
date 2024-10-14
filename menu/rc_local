@@ -1,1 +1,46 @@
+#!/bin/bash
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# System Request : Debian 9+/Ubuntu 18.04+/20+
+# Develovers » 🗽🥷🎮🧑‍💻🔫Cyberpunk🥷🧑‍💻🗽**TOpPLUG**
+# Email      » tuffgamer65@gmail.com
+# telegram   » https://t.me/T_OpPLUG
+# whatsapp   » wa.me/+254112386921
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🧑‍💻🏴‍☠️🥷🗽**TOpPLUG script**🧑‍💻🏴‍☠️🥷🗽
+# ==========================================
+clear
+rm /etc/systemd/system/rc-local.service > /dev/null 2>&1
+rm /etc/rc.local > /dev/null 2>&1
+cat >/etc/systemd/system/rc-local.service <<-END
+		[Unit]
+		Description=/etc/rc.local
+		ConditionPathExists=/etc/rc.local
+		[Service]
+		Type=forking
+		ExecStart=/etc/rc.local start
+		TimeoutSec=0
+		StandardOutput=tty
+		RemainAfterExit=yes
+		SysVStartPriority=99
+		[Install]
+		WantedBy=multi-user.target
+	END
 
+    cat >/etc/rc.local <<-END
+		#!/bin/sh -e
+		# rc.local
+		# By default this script does nothing.
+		iptables -I INPUT -p udp --dport 5300 -j ACCEPT
+		iptables -t nat -I PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 5300
+		systemctl restart netfilter-persistent
+		exit 0
+	END
+    # Ubah izin akses
+chmod +x /etc/rc.local
+
+# enable rc local
+rm /root/rc_local
+systemctl enable rc-local
+systemctl start rc-local.service
+service rc-local restart
+echo ""
