@@ -1,0 +1,247 @@
+<html>
+  <body>
+    <h1>Hello Beautiful!</h1>
+    <img src="https://c.tenor.com/Z8ezUHZzcLoAAAAC/love.gif" />
+    <h1>Will you be my girlfriend?</h1>
+    <button id="btn_yes" onclick="alert('I LOVE YOU')">Yes</button>&nbsp;
+    <button id="btn_no" onclick="noResponse(this)" style="position: absolute">
+      No
+    </button>
+  </body>
+  <script>
+    function noResponse(id) {
+      var yes = document.getElementById("btn_yes");
+      var i = Math.floor(Math.random() * 300) + 1;
+      var j = Math.floor(Math.random() * 100) + yes.offsetTop;
+      id.style.left = i + "px";
+      id.style.top = j + "px";
+    }
+  </script>
+</html>
+
+<html>
+  <head>
+    <meta charset='UTF-8'/>
+    <meta content='width=device-width, initial-scale=1, user-scalable=1, minimum-scale=1, maximum-scale=5' name='viewport'/>
+    <meta content='IE=edge' http-equiv='X-UA-Compatible'/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.all.min.js"></script>
+    <script src="https://kit.fontawesome.com/4f3ce16e3e.js" crossorigin="anonymous"></script>
+    <link href="https://Bbyy.feeldream.repl.co/style.css" rel="stylesheet" type="text/css" />
+    <script src="https://Bbyy.feeldream.repl.co/script.js"></script>
+    <title>Romantic Script for My Girlfriend</title>
+  </head>
+  <body>
+    <div id="bodyblur">
+      <img id="wallpaper" src="" width="100%" height="100%"/>
+    </div>
+    <div id='Content'>
+      <p id="idgeser"></p>
+      <div>
+        <blockquote id='bq'>
+          <img id="photo1" src=""/>
+          <img id="photo2" src=""/>
+          <img id="photo3" src=""/>
+          <img id="photo4" src=""/>
+          <img id="photo5" src=""/>
+          <img id="photo6" src=""/>
+          <p id="words"></p>
+          <p id="belowWords"></p>
+        </blockquote>
+      </div>
+
+      <div id="buttonContainer" style="display:none;">
+        <a id="Yes" class='button' onClick="accept()"></i>Continue</a><b id='buttonText2'></b><a id="No" class='button' onClick="reject()"></i>No</a>
+      </div>
+    </div>
+
+    <script>
+      const body = document.querySelector("body");
+      function createHeart() {
+        const heart = document.createElement("div"); 
+        heart.className = "fas fa-heart"; 
+        heart.style.left = (Math.random() * 90)+"vw"; 
+        heart.style.animationDuration = (Math.random()*3)+2+"s"; 
+        body.appendChild(heart);
+      } 
+      setInterval(function() {
+        var heartArr = document.querySelectorAll(".fa-heart"); 
+        if (heartArr.length > 100) {
+          heartArr[0].remove()
+        }
+      }, 100);
+    </script>
+    <script>
+      function hidePhoto() {
+        document.getElementById('idfoto').style.display = "none";
+      } 
+      function showPhoto() {
+        document.getElementById('idfoto').style.display = "block";
+      }
+      function hideContent() {
+        document.getElementById('Content').style = "opacity:0;visibility:hidden;margin-top:30vh;";
+      } 
+      function showContent() {
+        No.style="display:none";
+        setTimeout(playText, 100);
+        document.getElementById('Content').style = "opacity:1;margin-top:4vh;animation:contentAnimation 3s infinite;";
+        document.getElementById("words").innerHTML = text1;
+      }
+      function loadPhotos() {
+        document.getElementById('photo1').src = image1;
+        document.getElementById('photo2').src = image2;
+        document.getElementById('photo3').src = image3;
+        document.getElementById('photo4').src = image4;
+        document.getElementById('photo5').src = image5;
+        document.getElementById('photo6').src = image6;
+      }
+      function showFinal() {
+        setInterval(createHeart,200);
+        document.getElementById('finalWords').style = "opacity:1;transform:scale(1);margin:0;";
+        document.getElementById('finalPhoto').style = "transform:scale(1);";
+        document.getElementById('Content').style.display = "none";
+      }
+      function startFinal() {
+        hideContent();
+        setTimeout(showFinal,1400);
+        setTimeout(finalize,2400);
+      }
+      function showButtons() {
+        document.getElementById('buttonSend').style = "opacity:1;visibility:visible;margin-top:140px;";
+      } 
+      function showButtonContainer(){
+        buttonContainer.style="display:flex";
+      }
+      function autoProceed() {
+        beforeTextAnimation();
+        setTimeout(textAnimation, 400);
+        buttonContainer.style="display:none";
+        setTimeout(showButtonContainer, 1200);
+      }
+      function beforeTextAnimation(){
+        words.style="transform:scale(.01);";
+        belowWords.style="transform:scale(.01);";
+      } 
+      function textAnimation() {
+        words.style="transform:scale(1);";
+        belowWords.style="transform:scale(1);";
+      }
+  
+      async function showYesText(){
+        Yes.innerHTML = "Yes";
+        No.style="display:flex";
+        setTimeout(textAnimation,400);
+        setTimeout(showBelowWords,1500);
+      }
+      async function showNoText(){
+        await swal.fire(teksno);
+      }
+  
+      var aa=0,promptText;
+      promptText = "";
+      var ii=0,mainText;
+      mainText = "";
+      var i=0,bottomText;
+      bottomText = "";
+  
+      function playText() {
+        if(aa < promptText.length){
+          document.getElementById("idgeser").innerHTML += promptText.charAt(aa);
+          aa++;setTimeout(playText, 40);
+        }
+        if(aa == promptText.length){
+          setTimeout(showButtonContainer, 1200);
+          document.getElementById("idgeser").style = "display:none";
+          document.getElementById("bq").style = "opacity:1;visibility:visible;margin-top:0";
+          document.getElementById('bodyblur').style = "opacity:1;";
+        }
+      }
+      function showBelowWords() {
+        if(ii < mainText.length){
+          document.getElementById("belowWords").innerHTML += mainText.charAt(ii);
+          ii++;
+          setTimeout(showBelowWords, 80);
+        }
+        if(ii == mainText.length){
+          document.getElementById("belowWords").innerHTML = mainText + smileEmoji;
+          setTimeout(showButtonContainer,800);
+        }
+      }
+  
+      flag=1;
+      function reject(){
+        if(flag==1){
+          No.style="margin-left:90px;transform: rotate(45deg)";
+          buttonText2.style="opacity:1;";
+          Yes.style="opacity:0";
+          document.getElementById("buttonText2").innerHTML = noText1;
+          flag=2
+        } else if(flag==2){
+          No.style="margin-left:95px;transform: rotate(135deg)";
+          document.getElementById("buttonText2").innerHTML = noText2;
+          flag=3
+        } else if(flag==3){
+          No.style="margin:12px 8px 12px 0;transform: rotate(360deg)";
+          buttonText2.style="opacity:0;";
+          Yes.style="opacity:1";
+          flag=1
+        }
+      }
+
+      noText1 = "Oops 😝";
+      noText2 = "Can't do that 😝";
+      teksno = "You have to say yes!!! 😝";
+    
+      flag=1;
+      async function accept(){
+        if(flag == 1){
+          photo1.style="display:none";
+          photo2.style="display:inline-flex";
+          words.innerHTML = text2;
+          autoProceed();
+          flag=2
+        }
+        else if(flag == 2){
+          photo2.style="display:none";
+          photo3.style="display:inline-flex";
+          words.innerHTML = text3;
+          autoProceed();
+          flag=3
+        }
+        else if(flag == 3){
+          photo3.style="display:none";
+          photo4.style="display:inline-flex";
+          words.innerHTML = text4;
+          autoProceed();
+          flag=4
+        }
+        else if(flag == 4){
+          photo4.style="display:none";
+          photo5.style="display:inline-flex";
+          words.innerHTML = text5;
+          autoProceed();
+          flag=5
+        }
+        else if(flag == 5){
+          photo5.style="display:none";
+          photo6.style="display:inline-flex";
+          words.innerHTML = text6;
+          autoProceed();
+          flag=6
+        }
+        else if(flag == 6){
+          showFinal();
+        }
+      }
+
+      text1 = "My dear love,";
+      text2 = "I can't express enough how much you mean to me.";
+      text3 = "You're the light in my life.";
+      text4 = "You're the joy in my heart.";
+      text5 = "I want to spend my life with you.";
+      text6 = "Will you be my forever?";
+    </script>
+  </body>
+</html>
