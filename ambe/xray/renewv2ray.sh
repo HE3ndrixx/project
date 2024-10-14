@@ -113,91 +113,51 @@ fi
 clear
 date
 echo ""
-source /var/lib/geovpnstore/ipvps.conf
-if [[ "$IP" = "" ]]; then
-domain=$(cat /etc/xray/domain)
-else
-domain=$IP
-fi
-# Create Expried 
-masaaktif="1"
-exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
+NUMBER_OF_CLIENTS=$(grep -c -E "^### " "/etc/xray/v2ray-tls.json")
+	if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
+		clear
+		echo ""
+		echo "You have no existing clients!"
+		exit 1
+	fi
 
-read -rp "Bug: " -e bug
-tls="$(cat ~/log-install.txt | grep -w "Vmess TLS" | cut -d: -f2|sed 's/ //g')"
-nontls="$(cat ~/log-install.txt | grep -w "Vmess None TLS" | cut -d: -f2|sed 's/ //g')"
-# Make Random Username 
-user=Trial`</dev/urandom tr -dc X-Z0-9 | head -c4`
-uuid=$(cat /proc/sys/kernel/random/uuid)
-created=`date -d "0 days" +"%d-%m-%Y"`
-sed -i '/#xray-v2ray-tls$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/v2ray-tls.json
-sed -i '/#xray-v2ray-nontls$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/v2ray-nontls.json
-cat>/etc/xray/v2ray-$user-tls.json<<EOF
-      {
-      "v": "2",
-      "ps": "${user}",
-      "add": "${domain}",
-      "port": "${tls}",
-      "id": "${uuid}",
-      "aid": "0",
-      "net": "ws",
-      "path": "/worryfree",
-      "type": "none",
-      "host": "",
-      "tls": "tls"
-}
-EOF
-cat>/etc/xray/v2ray-$user-nontls.json<<EOF
-      {
-      "v": "2",
-      "ps": "${user}",
-      "add": "${bug}",
-      "port": "${nontls}",
-      "id": "${uuid}",
-      "aid": "0",
-      "net": "ws",
-      "path": "/worryfree",
-      "type": "none",
-      "host": "${domain}",
-      "tls": "none"
-}
-EOF
-vmess_base641=$( base64 -w 0 <<< $vmess_json1)
-vmess_base642=$( base64 -w 0 <<< $vmess_json2)
-xrayv2ray1="vmess://$(base64 -w 0 /etc/xray/v2ray-$user-tls.json)"
-xrayv2ray2="vmess://$(base64 -w 0 /etc/xray/v2ray-$user-nontls.json)"
-systemctl restart xray@v2ray-tls
-systemctl restart xray@v2ray-nontls
+	clear
+	echo ""
+	echo "Select the existing client you want to renew"
+	echo " Press CTRL+C to return"
+	echo -e "==============================="
+	grep -E "^### " "/etc/xray/v2ray-tls.json" | cut -d ' ' -f 2-3 | nl -s ') '
+	until [[ ${CLIENT_NUMBER} -ge 1 && ${CLIENT_NUMBER} -le ${NUMBER_OF_CLIENTS} ]]; do
+		if [[ ${CLIENT_NUMBER} == '1' ]]; then
+			read -rp "Select one client [1]: " CLIENT_NUMBER
+		else
+			read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
+		fi
+	done
+read -p "Expired (Days): " masaaktif
+user=$(grep -E "^### " "/etc/xray/v2ray-tls.json" | cut -d ' ' -f 2 | sed -n "${CLIENT_NUMBER}"p)
+exp=$(grep -E "^### " "/etc/xray/v2ray-tls.json" | cut -d ' ' -f 3 | sed -n "${CLIENT_NUMBER}"p)
+now=$(date +%Y-%m-%d)
+d1=$(date -d "$exp" +%s)
+d2=$(date -d "$now" +%s)
+exp2=$(( (d1 - d2) / 86400 ))
+exp3=$(($exp2 + $masaaktif))
+exp4=`date -d "$exp3 days" +"%Y-%m-%d"`
+sed -i "s/### $user $exp/### $user $exp4/g" /etc/xray/v2ray-tls.json
+sed -i "s/### $user $exp/### $user $exp4/g" /etc/xray/v2ray-nontls.json
 service cron restart
 clear
-echo -e " ==================================${off}"
-echo -e " TRIAL XRAY / VMESS${off}"
-echo -e " ==================================${off}"
-echo -e " Remarks        : ${user}"
-echo -e " Bug            : ${bug}"
-echo -e " Domain         : ${domain}"
-echo -e " Port TLS       : ${tls}"
-echo -e " Port No TLS    : ${nontls}"
-echo -e " ID             : ${uuid}"
-echo -e " AlterID        : 0"
-echo -e " Security       : auto"
-echo -e " Network        : ws"
-echo -e " Path           : /worryfree"
-echo -e " ==================================${off}"
-echo -e " VMESS TLS : $off${xrayv2ray1}"
-echo -e " ==================================${off}"
-echo -e " VMESS NON-TLS : $off${xrayv2ray2}"
-echo -e " ==================================${off}"
-echo -e " Aktif Selama   : $masaaktif Hari"
-echo -e " ==================================${off}"
-echo -e ""
-echo -e "Script By 🧑‍💻HE3ndrixx🧑‍💻☁️☁️☁️☁️🗽TOpPLUG🧑‍💻"
+echo ""
+echo "==============================="
+echo "  XRAYS/Vmess Account Renewed  "
+echo "==============================="
+echo "Username  : $user"
+echo "Expired   : $exp4"
+echo "==============================="
+echo "Script By 🧑‍💻HE3ndrixx🧑‍💻☁️☁️☁️☁️🗽TOpPLUG🧑‍💻"
 echo -e ""
 echo -e ""
 echo -e ""
 read -n 1 -s -r -p "Press Any Key To Back On Menu"
 
 menu-v2ray
-

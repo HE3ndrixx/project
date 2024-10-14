@@ -113,91 +113,54 @@ fi
 clear
 date
 echo ""
-source /var/lib/geovpnstore/ipvps.conf
-if [[ "$IP" = "" ]]; then
 domain=$(cat /etc/xray/domain)
-else
-domain=$IP
-fi
-# Create Expried 
-masaaktif="1"
-exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
+tls="$(cat ~/log-install.txt | grep -w "Vless TLS" | cut -d: -f2|sed 's/ //g')"
+nontls="$(cat ~/log-install.txt | grep -w "Vless None TLS" | cut -d: -f2|sed 's/ //g')"
+until [[ $user =~ ^[a-zA-Z0-9_]+$ && ${CLIENT_EXISTS} == '0' ]]; do
+		read -rp "Username : " -e user
+		CLIENT_EXISTS=$(grep -w $user /etc/xray/vless-tls.json | wc -l)
 
-read -rp "Bug: " -e bug
-tls="$(cat ~/log-install.txt | grep -w "Vmess TLS" | cut -d: -f2|sed 's/ //g')"
-nontls="$(cat ~/log-install.txt | grep -w "Vmess None TLS" | cut -d: -f2|sed 's/ //g')"
-# Make Random Username 
-user=Trial`</dev/urandom tr -dc X-Z0-9 | head -c4`
+		if [[ ${CLIENT_EXISTS} == '1' ]]; then
+			echo ""
+			echo -e "Username ${RED}${user}${NC} Already On VPS Please Choose Another"
+			exit 1
+		fi
+	done
 uuid=$(cat /proc/sys/kernel/random/uuid)
-created=`date -d "0 days" +"%d-%m-%Y"`
-sed -i '/#xray-v2ray-tls$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/v2ray-tls.json
-sed -i '/#xray-v2ray-nontls$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/v2ray-nontls.json
-cat>/etc/xray/v2ray-$user-tls.json<<EOF
-      {
-      "v": "2",
-      "ps": "${user}",
-      "add": "${domain}",
-      "port": "${tls}",
-      "id": "${uuid}",
-      "aid": "0",
-      "net": "ws",
-      "path": "/worryfree",
-      "type": "none",
-      "host": "",
-      "tls": "tls"
-}
-EOF
-cat>/etc/xray/v2ray-$user-nontls.json<<EOF
-      {
-      "v": "2",
-      "ps": "${user}",
-      "add": "${bug}",
-      "port": "${nontls}",
-      "id": "${uuid}",
-      "aid": "0",
-      "net": "ws",
-      "path": "/worryfree",
-      "type": "none",
-      "host": "${domain}",
-      "tls": "none"
-}
-EOF
-vmess_base641=$( base64 -w 0 <<< $vmess_json1)
-vmess_base642=$( base64 -w 0 <<< $vmess_json2)
-xrayv2ray1="vmess://$(base64 -w 0 /etc/xray/v2ray-$user-tls.json)"
-xrayv2ray2="vmess://$(base64 -w 0 /etc/xray/v2ray-$user-nontls.json)"
-systemctl restart xray@v2ray-tls
-systemctl restart xray@v2ray-nontls
+read -p "Expired (Days) : " masaaktif
+hariini=`date -d "0 days" +"%Y-%m-%d"`
+exp=`date -d "$masaaktif days" +"%Y-%m-%d"`
+sed -i '/#xray-vless-tls$/a\### '"$user $exp"'\
+},{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vless-tls.json
+sed -i '/#xray-vless-nontls$/a\### '"$user $exp"'\
+},{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/vless-nontls.json
+xrayvless1="vless://${uuid}@${domain}:$tls?path=/worryfree&security=tls&encryption=none&type=ws#${user}"
+xrayvless2="vless://${uuid}@${domain}:$nontls?path=/worryfree&encryption=none&type=ws#${user}"
+systemctl restart xray@vless-tls
+systemctl restart xray@vless-nontls
 service cron restart
 clear
-echo -e " ==================================${off}"
-echo -e " TRIAL XRAY / VMESS${off}"
-echo -e " ==================================${off}"
-echo -e " Remarks        : ${user}"
-echo -e " Bug            : ${bug}"
-echo -e " Domain         : ${domain}"
-echo -e " Port TLS       : ${tls}"
-echo -e " Port No TLS    : ${nontls}"
-echo -e " ID             : ${uuid}"
-echo -e " AlterID        : 0"
-echo -e " Security       : auto"
-echo -e " Network        : ws"
-echo -e " Path           : /worryfree"
-echo -e " ==================================${off}"
-echo -e " VMESS TLS : $off${xrayv2ray1}"
-echo -e " ==================================${off}"
-echo -e " VMESS NON-TLS : $off${xrayv2ray2}"
-echo -e " ==================================${off}"
-echo -e " Aktif Selama   : $masaaktif Hari"
-echo -e " ==================================${off}"
 echo -e ""
-echo -e "Script By 🧑‍💻HE3ndrixx🧑‍💻☁️☁️☁️☁️🗽TOpPLUG🧑‍💻"
-echo -e ""
-echo -e ""
-echo -e ""
-read -n 1 -s -r -p "Press Any Key To Back On Menu"
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m" | tee -a /etc/log-create-user.log
+echo -e "\E[44;1;39m  ⇱ Xray/Vless Account  ⇲ \E[0m" | tee -a /etc/log-create-user.log
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m" | tee -a /etc/log-create-user.log
+echo -e "Remarks     : ${user}" | tee -a /etc/log-create-user.log
+echo -e "IP/Host     : ${IP}" | tee -a /etc/log-create-user.log
+echo -e "Address     : ${domain}" | tee -a /etc/log-create-user.log
+echo -e "Port TLS    : $tls" | tee -a /etc/log-create-user.log
+echo -e "Port No TLS : $nontls" | tee -a /etc/log-create-user.log
+echo -e "User ID     : ${uuid}" | tee -a /etc/log-create-user.log
+echo -e "Encryption  : none" | tee -a /etc/log-create-user.log
+echo -e "Network     : ws" | tee -a /etc/log-create-user.log
+echo -e "Path        : /worryfree" | tee -a /etc/log-create-user.log
+echo -e "Created     : $hariini" | tee -a /etc/log-create-user.log
+echo -e "Expired     : $exp" | tee -a /etc/log-create-user.log
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m" | tee -a /etc/log-create-user.log
+echo -e "Link TLS    : ${xrayvless1}" | tee -a /etc/log-create-user.log
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m" | tee -a /etc/log-create-user.log
+echo -e "Link No TLS : ${xrayvless2}" | tee -a /etc/log-create-user.log
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━\033[0m" | tee -a /etc/log-create-user.log
+echo -e "" | tee -a /etc/log-create-user.log
+read -n 1 -s -r -p "Press Any Key To Back On Menu" | tee -a /etc/log-create-user.log
 
 menu-v2ray
-

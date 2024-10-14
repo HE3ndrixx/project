@@ -113,91 +113,60 @@ fi
 clear
 date
 echo ""
-source /var/lib/geovpnstore/ipvps.conf
-if [[ "$IP" = "" ]]; then
 domain=$(cat /etc/xray/domain)
-else
-domain=$IP
-fi
-# Create Expried 
-masaaktif="1"
-exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
 
-read -rp "Bug: " -e bug
-tls="$(cat ~/log-install.txt | grep -w "Vmess TLS" | cut -d: -f2|sed 's/ //g')"
-nontls="$(cat ~/log-install.txt | grep -w "Vmess None TLS" | cut -d: -f2|sed 's/ //g')"
-# Make Random Username 
-user=Trial`</dev/urandom tr -dc X-Z0-9 | head -c4`
+tr="$(cat ~/log-install.txt | grep -w "Trojan" | cut -d: -f2|sed 's/ //g')"
+until [[ $user =~ ^[a-zA-Z0-9_]+$ && ${user_EXISTS} == '0' ]]; do
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "\E[44;1;39m         ⇱ TROJAN ACCOUNT ⇲        \E[0m"
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+		read -rp "User : " -e user
+		user_EXISTS=$(grep -w $user /etc/xray/trojan.json | wc -l)
+
+		if [[ ${user_EXISTS} == '1' ]]; then
+		clear
+			echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+		echo -e "\E[44;1;39m         ⇱ TROJAN ACCOUNT ⇲        \E[0m"
+		echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+			echo ""
+			echo "A client with the specified name was already created, please choose another name."
+			echo ""
+			echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+			read -n 1 -s -r -p "Press any key to back on menu"
+			menu-trojan
+		fi
+	done
 uuid=$(cat /proc/sys/kernel/random/uuid)
-created=`date -d "0 days" +"%d-%m-%Y"`
-sed -i '/#xray-v2ray-tls$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/v2ray-tls.json
-sed -i '/#xray-v2ray-nontls$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/v2ray-nontls.json
-cat>/etc/xray/v2ray-$user-tls.json<<EOF
-      {
-      "v": "2",
-      "ps": "${user}",
-      "add": "${domain}",
-      "port": "${tls}",
-      "id": "${uuid}",
-      "aid": "0",
-      "net": "ws",
-      "path": "/worryfree",
-      "type": "none",
-      "host": "",
-      "tls": "tls"
-}
-EOF
-cat>/etc/xray/v2ray-$user-nontls.json<<EOF
-      {
-      "v": "2",
-      "ps": "${user}",
-      "add": "${bug}",
-      "port": "${nontls}",
-      "id": "${uuid}",
-      "aid": "0",
-      "net": "ws",
-      "path": "/worryfree",
-      "type": "none",
-      "host": "${domain}",
-      "tls": "none"
-}
-EOF
-vmess_base641=$( base64 -w 0 <<< $vmess_json1)
-vmess_base642=$( base64 -w 0 <<< $vmess_json2)
-xrayv2ray1="vmess://$(base64 -w 0 /etc/xray/v2ray-$user-tls.json)"
-xrayv2ray2="vmess://$(base64 -w 0 /etc/xray/v2ray-$user-nontls.json)"
-systemctl restart xray@v2ray-tls
-systemctl restart xray@v2ray-nontls
+read -p "Expired (Days) : " masaaktif
+read -p "BUG : " BUG
+hariini=`date -d "0 days" +"%Y-%m-%d"`
+exp=`date -d "$masaaktif days" +"%Y-%m-%d"`
+sed -i '/#xray-trojan$/a\### '"$user $exp"'\
+},{"password": "'""$uuid""'","email": "'""$user""'"' /etc/xray/trojan.json
+systemctl restart xray@trojan
+trojanlink1="trojan://${uuid}@${MYIP}:${tr}?sni=${BUG}#${user}@Geo_Project"
+trojanlink2="trojan://${uuid}@${domain}:${tr}?sni=${BUG}#${user}@Geo_Project"
 service cron restart
 clear
-echo -e " ==================================${off}"
-echo -e " TRIAL XRAY / VMESS${off}"
-echo -e " ==================================${off}"
-echo -e " Remarks        : ${user}"
-echo -e " Bug            : ${bug}"
-echo -e " Domain         : ${domain}"
-echo -e " Port TLS       : ${tls}"
-echo -e " Port No TLS    : ${nontls}"
-echo -e " ID             : ${uuid}"
-echo -e " AlterID        : 0"
-echo -e " Security       : auto"
-echo -e " Network        : ws"
-echo -e " Path           : /worryfree"
-echo -e " ==================================${off}"
-echo -e " VMESS TLS : $off${xrayv2ray1}"
-echo -e " ==================================${off}"
-echo -e " VMESS NON-TLS : $off${xrayv2ray2}"
-echo -e " ==================================${off}"
-echo -e " Aktif Selama   : $masaaktif Hari"
-echo -e " ==================================${off}"
-echo -e ""
-echo -e "Script By 🧑‍💻HE3ndrixx🧑‍💻☁️☁️☁️☁️🗽TOpPLUG🧑‍💻"
-echo -e ""
-echo -e ""
-echo -e ""
-read -n 1 -s -r -p "Press Any Key To Back On Menu"
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m" | tee -a /etc/log-create-user.log
+echo -e "\E[44;1;39m         ⇱ TROJAN ACCOUNT ⇲        \E[0m" | tee -a /etc/log-create-user.log
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m" | tee -a /etc/log-create-user.log
+echo -e "Remarks : ${user}" | tee -a /etc/log-create-user.log
+echo -e "Host/IP : ${domain}" | tee -a /etc/log-create-user.log
+echo -e "port : ${tr}" | tee -a /etc/log-create-user.log
+echo -e "Key : ${uuid}" | tee -a /etc/log-create-user.log
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m" | tee -a /etc/log-create-user.log
+echo -e "IP + BUG     : " | tee -a /etc/log-create-user.log
+echo -e "${trojanlink1}" | tee -a /etc/log-create-user.log
+echo -e "" | tee -a /etc/log-create-user.log
+echo -e "DOMAIN + BUG : " | tee -a /etc/log-create-user.log
+echo -e "${trojanlink2}" | tee -a /etc/log-create-user.log
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m" | tee -a /etc/log-create-user.log
+echo -e "Created  : $hariini" | tee -a /etc/log-create-user.log
+echo -e "Expired  : $exp" | tee -a /etc/log-create-user.log
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m" | tee -a /etc/log-create-user.log
+echo "" | tee -a /etc/log-create-user.log
+read -n 1 -s -r -p "Press any key to back on menu"
 
-menu-v2ray
+menu-trojan
 

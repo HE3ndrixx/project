@@ -113,91 +113,67 @@ fi
 clear
 date
 echo ""
-source /var/lib/geovpnstore/ipvps.conf
-if [[ "$IP" = "" ]]; then
-domain=$(cat /etc/xray/domain)
+Green_font_prefix="\033[32m" && Red_font_prefix="\033[31m" && Green_background_prefix="\033[42;37m" && Red_background_prefix="\033[41;37m" && Font_color_suffix="\033[0m"
+Info="${Green_font_prefix}[ON]${Font_color_suffix}"
+Error="${Red_font_prefix}[OFF]${Font_color_suffix}"
+cek=/etc/cron.d/multi-ws
+if [[ -f "$cek" ]]; then
+sts="${Info}"
 else
-domain=$IP
+sts="${Error}"
 fi
-# Create Expried 
-masaaktif="1"
-exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
 
-read -rp "Bug: " -e bug
-tls="$(cat ~/log-install.txt | grep -w "Vmess TLS" | cut -d: -f2|sed 's/ //g')"
-nontls="$(cat ~/log-install.txt | grep -w "Vmess None TLS" | cut -d: -f2|sed 's/ //g')"
-# Make Random Username 
-user=Trial`</dev/urandom tr -dc X-Z0-9 | head -c4`
-uuid=$(cat /proc/sys/kernel/random/uuid)
-created=`date -d "0 days" +"%d-%m-%Y"`
-sed -i '/#xray-v2ray-tls$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/v2ray-tls.json
-sed -i '/#xray-v2ray-nontls$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/v2ray-nontls.json
-cat>/etc/xray/v2ray-$user-tls.json<<EOF
-      {
-      "v": "2",
-      "ps": "${user}",
-      "add": "${domain}",
-      "port": "${tls}",
-      "id": "${uuid}",
-      "aid": "0",
-      "net": "ws",
-      "path": "/worryfree",
-      "type": "none",
-      "host": "",
-      "tls": "tls"
+function start() {
+multiws=/home/multi-ws
+if [[ -f "$multiws" ]]; then
+echo "Already ON Bro"
+else
+touch /home/multi-ws
+
+cat> /etc/cron.d/multi-ws <<END
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# m h dom mon dow user  command
+*/1 * * * * root /usr/bin/akill-ws > /root/kill-log-vmess
+END
+
+service cron restart >/dev/null 2>&1
+service cron reload >/dev/null 2>&1
+sleep 1
+echo -e "${green}Autokill-Vmess Started${NC}"
+exit 0
+fi
 }
-EOF
-cat>/etc/xray/v2ray-$user-nontls.json<<EOF
-      {
-      "v": "2",
-      "ps": "${user}",
-      "add": "${bug}",
-      "port": "${nontls}",
-      "id": "${uuid}",
-      "aid": "0",
-      "net": "ws",
-      "path": "/worryfree",
-      "type": "none",
-      "host": "${domain}",
-      "tls": "none"
+
+function stop() {
+rm -f /home/multi-ws
+rm -f /etc/cron.d/multi-ws
+rm -f /root/kill-log-vmess
+service cron restart >/dev/null 2>&1
+service cron reload >/dev/null 2>&1
+sleep 1
+echo -e "${red}Autokill-Vmess Stopped${NC}"
+exit 0
 }
-EOF
-vmess_base641=$( base64 -w 0 <<< $vmess_json1)
-vmess_base642=$( base64 -w 0 <<< $vmess_json2)
-xrayv2ray1="vmess://$(base64 -w 0 /etc/xray/v2ray-$user-tls.json)"
-xrayv2ray2="vmess://$(base64 -w 0 /etc/xray/v2ray-$user-nontls.json)"
-systemctl restart xray@v2ray-tls
-systemctl restart xray@v2ray-nontls
-service cron restart
+
 clear
-echo -e " ==================================${off}"
-echo -e " TRIAL XRAY / VMESS${off}"
-echo -e " ==================================${off}"
-echo -e " Remarks        : ${user}"
-echo -e " Bug            : ${bug}"
-echo -e " Domain         : ${domain}"
-echo -e " Port TLS       : ${tls}"
-echo -e " Port No TLS    : ${nontls}"
-echo -e " ID             : ${uuid}"
-echo -e " AlterID        : 0"
-echo -e " Security       : auto"
-echo -e " Network        : ws"
-echo -e " Path           : /worryfree"
-echo -e " ==================================${off}"
-echo -e " VMESS TLS : $off${xrayv2ray1}"
-echo -e " ==================================${off}"
-echo -e " VMESS NON-TLS : $off${xrayv2ray2}"
-echo -e " ==================================${off}"
-echo -e " Aktif Selama   : $masaaktif Hari"
-echo -e " ==================================${off}"
-echo -e ""
-echo -e "Script By 🧑‍💻HE3ndrixx🧑‍💻☁️☁️☁️☁️🗽TOpPLUG🧑‍💻"
-echo -e ""
-echo -e ""
-echo -e ""
-read -n 1 -s -r -p "Press Any Key To Back On Menu"
-
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "\E[44;1;39m            ⇱ AutoKill Vmess ⇲            \E[0m"
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"  
+echo -e " Status $sts"
+echo ""
+echo -e "  1. Enable Mode Auto Kill VMess"
+echo -e "  2. Disable Mode Auto Kill VMess"
+echo ""
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo ""
+read -rp " Input Number : " -e num
+if [[ "$num" = "1" ]]; then
+start
+elif [[ "$num" = "2" ]]; then
+stop
+else
+clear
 menu-v2ray
-
+fi

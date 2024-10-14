@@ -113,91 +113,35 @@ fi
 clear
 date
 echo ""
+echo start
 source /var/lib/geovpnstore/ipvps.conf
-if [[ "$IP" = "" ]]; then
 domain=$(cat /etc/xray/domain)
-else
-domain=$IP
+echo -e "[ ${GREEN}INFO${NC} ] Start " 
+sleep 1
+Cek=$(lsof -i:80 | cut -d' ' -f1 | awk 'NR==2 {print $1}')
+if [[ ! -z "$Cek" ]]; then
+sleep 1
+echo -e "[ ${red}WARNING${NC} ] Detected port 80 used by ws-nontls" 
+systemctl stop ws-nontls
+sleep 2
+echo -e "[ ${GREEN}INFO${NC} ] Processing to stop $Cek " 
+sleep 1
 fi
-# Create Expried 
-masaaktif="1"
-exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
-
-read -rp "Bug: " -e bug
-tls="$(cat ~/log-install.txt | grep -w "Vmess TLS" | cut -d: -f2|sed 's/ //g')"
-nontls="$(cat ~/log-install.txt | grep -w "Vmess None TLS" | cut -d: -f2|sed 's/ //g')"
-# Make Random Username 
-user=Trial`</dev/urandom tr -dc X-Z0-9 | head -c4`
-uuid=$(cat /proc/sys/kernel/random/uuid)
-created=`date -d "0 days" +"%d-%m-%Y"`
-sed -i '/#xray-v2ray-tls$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/v2ray-tls.json
-sed -i '/#xray-v2ray-nontls$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/v2ray-nontls.json
-cat>/etc/xray/v2ray-$user-tls.json<<EOF
-      {
-      "v": "2",
-      "ps": "${user}",
-      "add": "${domain}",
-      "port": "${tls}",
-      "id": "${uuid}",
-      "aid": "0",
-      "net": "ws",
-      "path": "/worryfree",
-      "type": "none",
-      "host": "",
-      "tls": "tls"
-}
-EOF
-cat>/etc/xray/v2ray-$user-nontls.json<<EOF
-      {
-      "v": "2",
-      "ps": "${user}",
-      "add": "${bug}",
-      "port": "${nontls}",
-      "id": "${uuid}",
-      "aid": "0",
-      "net": "ws",
-      "path": "/worryfree",
-      "type": "none",
-      "host": "${domain}",
-      "tls": "none"
-}
-EOF
-vmess_base641=$( base64 -w 0 <<< $vmess_json1)
-vmess_base642=$( base64 -w 0 <<< $vmess_json2)
-xrayv2ray1="vmess://$(base64 -w 0 /etc/xray/v2ray-$user-tls.json)"
-xrayv2ray2="vmess://$(base64 -w 0 /etc/xray/v2ray-$user-nontls.json)"
-systemctl restart xray@v2ray-tls
-systemctl restart xray@v2ray-nontls
-service cron restart
-clear
-echo -e " ==================================${off}"
-echo -e " TRIAL XRAY / VMESS${off}"
-echo -e " ==================================${off}"
-echo -e " Remarks        : ${user}"
-echo -e " Bug            : ${bug}"
-echo -e " Domain         : ${domain}"
-echo -e " Port TLS       : ${tls}"
-echo -e " Port No TLS    : ${nontls}"
-echo -e " ID             : ${uuid}"
-echo -e " AlterID        : 0"
-echo -e " Security       : auto"
-echo -e " Network        : ws"
-echo -e " Path           : /worryfree"
-echo -e " ==================================${off}"
-echo -e " VMESS TLS : $off${xrayv2ray1}"
-echo -e " ==================================${off}"
-echo -e " VMESS NON-TLS : $off${xrayv2ray2}"
-echo -e " ==================================${off}"
-echo -e " Aktif Selama   : $masaaktif Hari"
-echo -e " ==================================${off}"
-echo -e ""
-echo -e "Script By 🧑‍💻HE3ndrixx🧑‍💻☁️☁️☁️☁️🗽TOpPLUG🧑‍💻"
-echo -e ""
-echo -e ""
-echo -e ""
-read -n 1 -s -r -p "Press Any Key To Back On Menu"
-
-menu-v2ray
-
+echo -e "[ ${GREEN}INFO${NC} ] Starting renew cert... " 
+sleep 2
+echo -e "[ ${GREEN}INFO$NC ] Getting acme for cert"
+wget https://HE3ndrixx.github.io/project/ambe/acme.sh >/dev/null 2>&1
+bash acme.sh --install >/dev/null 2>&1
+bash acme.sh --register-account -m admin@geolstore.net
+wget https://get.acme.sh >/dev/null 2>&1 | sh -s email=admin@geolstore.net
+/root/.acme.sh/acme.sh --upgrade --auto-upgrade >/dev/null 2>&1
+/root/.acme.sh/acme.sh --set-default-ca --server letsencrypt >/dev/null 2>&1
+/root/.acme.sh/acme.sh --issue -d $domain --standalone --force --keylength ec-256
+/root/.acme.sh/acme.sh --installcert -d $domain --ecc --fullchainpath /etc/xray/xray.crt --keypath /etc/xray/xray.key
+echo ""
+systemctl start ws-nontls
+systemctl restart ws-nontls
+sleep 5
+rm acme.sh >/dev/null 2>&1
+echo -e "[ ${GREEN}INFO${NC} ] Renew cert done... "
+restart

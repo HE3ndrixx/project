@@ -45,7 +45,7 @@ export WARNING="${RED}\e[5m"
 export UNDERLINE="\e[4m"
 
 # // Exporting URL Host
-export Server_URL="autosscript.site/ambe"
+export Server_URL="raw.githubusercontent.com/HE3ndrixx/lekong/main"
 export Server_URLL="raw.githubusercontent.com/HE3ndrixx/perizinan/main"
 export Server_Port="443"
 export Server_IP="underfined"
@@ -111,93 +111,56 @@ else
     echo $sisa_hari > /etc/${Auther}/license-remaining-active-days.db
 fi
 clear
-date
-echo ""
-source /var/lib/geovpnstore/ipvps.conf
-if [[ "$IP" = "" ]]; then
-domain=$(cat /etc/xray/domain)
-else
-domain=$IP
-fi
-# Create Expried 
-masaaktif="1"
-exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
+#echo -n /var/log/xray/access.log
+echo -n > /tmp/other.txt
+data=( `cat /etc/xray/v2ray-tls.json | grep '^###' | cut -d ' ' -f 2`);
 
-read -rp "Bug: " -e bug
-tls="$(cat ~/log-install.txt | grep -w "Vmess TLS" | cut -d: -f2|sed 's/ //g')"
-nontls="$(cat ~/log-install.txt | grep -w "Vmess None TLS" | cut -d: -f2|sed 's/ //g')"
-# Make Random Username 
-user=Trial`</dev/urandom tr -dc X-Z0-9 | head -c4`
-uuid=$(cat /proc/sys/kernel/random/uuid)
-created=`date -d "0 days" +"%d-%m-%Y"`
-sed -i '/#xray-v2ray-tls$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/v2ray-tls.json
-sed -i '/#xray-v2ray-nontls$/a\### '"$user $exp"'\
-},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/v2ray-nontls.json
-cat>/etc/xray/v2ray-$user-tls.json<<EOF
-      {
-      "v": "2",
-      "ps": "${user}",
-      "add": "${domain}",
-      "port": "${tls}",
-      "id": "${uuid}",
-      "aid": "0",
-      "net": "ws",
-      "path": "/worryfree",
-      "type": "none",
-      "host": "",
-      "tls": "tls"
-}
-EOF
-cat>/etc/xray/v2ray-$user-nontls.json<<EOF
-      {
-      "v": "2",
-      "ps": "${user}",
-      "add": "${bug}",
-      "port": "${nontls}",
-      "id": "${uuid}",
-      "aid": "0",
-      "net": "ws",
-      "path": "/worryfree",
-      "type": "none",
-      "host": "${domain}",
-      "tls": "none"
-}
-EOF
-vmess_base641=$( base64 -w 0 <<< $vmess_json1)
-vmess_base642=$( base64 -w 0 <<< $vmess_json2)
-xrayv2ray1="vmess://$(base64 -w 0 /etc/xray/v2ray-$user-tls.json)"
-xrayv2ray2="vmess://$(base64 -w 0 /etc/xray/v2ray-$user-nontls.json)"
-systemctl restart xray@v2ray-tls
-systemctl restart xray@v2ray-nontls
-service cron restart
-clear
-echo -e " ==================================${off}"
-echo -e " TRIAL XRAY / VMESS${off}"
-echo -e " ==================================${off}"
-echo -e " Remarks        : ${user}"
-echo -e " Bug            : ${bug}"
-echo -e " Domain         : ${domain}"
-echo -e " Port TLS       : ${tls}"
-echo -e " Port No TLS    : ${nontls}"
-echo -e " ID             : ${uuid}"
-echo -e " AlterID        : 0"
-echo -e " Security       : auto"
-echo -e " Network        : ws"
-echo -e " Path           : /worryfree"
-echo -e " ==================================${off}"
-echo -e " VMESS TLS : $off${xrayv2ray1}"
-echo -e " ==================================${off}"
-echo -e " VMESS NON-TLS : $off${xrayv2ray2}"
-echo -e " ==================================${off}"
-echo -e " Aktif Selama   : $masaaktif Hari"
-echo -e " ==================================${off}"
-echo -e ""
-echo -e "Script By 🧑‍💻HE3ndrixx🧑‍💻☁️☁️☁️☁️🗽TOpPLUG🧑‍💻"
-echo -e ""
-echo -e ""
-echo -e ""
-read -n 1 -s -r -p "Press Any Key To Back On Menu"
+#echo -e "\033[0;34m┌─────────────────────────┐${NC}"
+#echo -e "\033[0;34m│$NC\E[41;1;39m     VMESS USER LOGIN    \E[0m\033[0;34m│"
+#echo -e "\033[0;34m└─────────────────────────┘${NC}"
+echo "-----------------------------------------";
+echo "---------=[ Vmess User Login ]=----------";
+echo "-----------------------------------------";
+
+for akun in "${data[@]}"
+do
+if [[ -z "$akun" ]]; then
+akun="tidakada"
+fi
+
+echo -n > /tmp/ipvmess.txt
+data2=( `cat /var/log/xray/v2ray-login.log | tail -n 500 | cut -d " " -f 3 | sed 's/tcp://g' | cut -d ":" -f 1 | sort | uniq`);
+for ip in "${data2[@]}"
+do
+
+jum=$(cat /var/log/xray/v2ray-login.log | grep -w "$akun" | tail -n 500 | cut -d " " -f 3 | sed 's/tcp://g' | cut -d ":" -f 1 | grep -w "$ip" | sort | uniq)
+if [[ "$jum" = "$ip" ]]; then
+echo "$jum" >> /tmp/ipvmess.txt
+else
+echo "$ip" >> /tmp/other.txt
+fi
+jum2=$(cat /tmp/ipvmess.txt)
+sed -i "/$jum2/d" /tmp/other.txt > /dev/null 2>&1
+done
+
+jum=$(cat /tmp/ipvmess.txt)
+if [[ -z "$jum" ]]; then
+echo > /dev/null
+else
+jum2=$(cat /tmp/ipvmess.txt | nl)
+echo ""
+echo "user : "
+#echo -e "\033[0;34m┌─────────────────────────┐${NC}"
+echo -e "     $GREEN $akun $NC"
+echo -e "$jum2";
+#echo -e "\033[0;34m└─────────────────────────┘${NC}"
+echo "-----------------------------------------";
+fi
+rm -rf /tmp/ipvmess.txt
+done
+
+rm -rf /tmp/other.txt
+echo ""
+read -n 1 -s -r -p "Press any key to back on menu"
 
 menu-v2ray
-
